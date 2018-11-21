@@ -11,47 +11,64 @@ const auctionOrBuyUtility = new AuctionOrBuyUtility();
 router.post('/signup', (req, res, next) => {
     if (isNotBlank(req.body.username) && isNotBlank(req.body.password) && isNotBlank(req.body.first_name) &&
         isNotBlank(req.body.last_name) && isNotBlank(req.body.phone_number) && isNotBlank(req.body.dob)) {
-        const user = new User({
-            _id: new monogoose.Types.ObjectId(),
-            username: req.body.username,
-            password: req.body.password,
-            first_name: req.body.first_name,
-            last_name: req.body.last_name,
-            phone_number: req.body.phone_number,
-            dob: req.body.dob,
-            balance: 0,
-            active: true
+        User.findOne({
+            username: req.body.username
+        }).exec().then((result => {
+            if (isNotBlank(result)) {
+                res.status(400).json({
+                    message: 'user existing'
+                });
+            } else {
+                const user = new User({
+                    _id: new monogoose.Types.ObjectId(),
+                    username: req.body.username,
+                    password: req.body.password,
+                    first_name: req.body.first_name,
+                    last_name: req.body.last_name,
+                    phone_number: req.body.phone_number,
+                    dob: req.body.dob,
+                    balance: 0,
+                    active: true
+                });
+                user.save().then(result => {
+                    const token = jwt.sign({
+                        _id: result._id,
+                        username: result.username,
+                        first_name: result.first_name,
+                        last_name: result.last_name,
+                        phone_number: result.phone_number,
+                        dob: result.dob,
+                        balance: 0,
+                        active: result.active
+                    }, AuctionOrBuyUtility.USER_TOKEN, {
+                        expiresIn: '2h'
+                    });
+                    const refreshToken = jwt.sign({
+                        _id: result._id,
+                        username: result.username,
+                        first_name: result.first_name,
+                        last_name: result.last_name,
+                        phone_number: result.phone_number,
+                        dob: result.dob,
+                        balance: 0,
+                        active: result.active
+                    }, AuctionOrBuyUtility.USER_REFRESH, {
+                        expiresIn: '30d'
+                    });
+                    res.status(200).json({
+                        accessToken: token,
+                        refreshToken: refreshToken
+                    });
+                }).catch(err => {
+                    res.status(500).json({
+                        error: err
+                    });
+                });
+            }
+        })).catch((err) => {
+            console.log(err);
+            res.status(500).json({ error: err });
         });
-        user.save().then(result => {
-            const token = jwt.sign({
-                _id: result._id,
-                username: result.username,
-                first_name: result.first_name,
-                last_name: result.last_name,
-                phone_number: result.phone_number,
-                dob: result.dob,
-                balance: 0,
-                active: result.active
-            }, AuctionOrBuyUtility.USER_TOKEN, {
-                expiresIn: '2h'
-            });
-            const refreshToken = jwt.sign({
-                _id: result._id,
-                username: result.username,
-                first_name: result.first_name,
-                last_name: result.last_name,
-                phone_number: result.phone_number,
-                dob: result.dob,
-                balance: 0,
-                active: result.active
-            }, AuctionOrBuyUtility.USER_REFRESH, {
-                expiresIn: '30d'
-            });
-            res.status(200).json({
-                accessToken: token,
-                refreshToken: refreshToken
-            });
-        }).catch();
     } else {
         res.status(400).json({
             message: 'input missing'
