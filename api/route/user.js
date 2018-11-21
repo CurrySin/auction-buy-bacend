@@ -7,7 +7,7 @@ const router = express.Router();
 
 const User = require('./../../models/user');
 const auctionOrBuyUtility = new AuctionOrBuyUtility();
-
+// user sign up
 router.post('/signup', (req, res, next) => {
     if (isNotBlank(req.body.username) && isNotBlank(req.body.password) && isNotBlank(req.body.first_name) &&
         isNotBlank(req.body.last_name) && isNotBlank(req.body.phone_number) && isNotBlank(req.body.dob)) {
@@ -45,7 +45,7 @@ router.post('/signup', (req, res, next) => {
                 balance: 0,
                 active: result.active
             }, AuctionOrBuyUtility.USER_REFRESH, {
-                expiresIn: '1d'
+                expiresIn: '30d'
             });
             res.status(200).json({
                 accessToken: token,
@@ -58,7 +58,7 @@ router.post('/signup', (req, res, next) => {
         });
     }
 });
-
+// user login
 router.post('/login', (req, res, next) => {
     if (isNotBlank(req.body.username) && isNotBlank(req.body.password)) {
         User.findOne({
@@ -88,7 +88,7 @@ router.post('/login', (req, res, next) => {
                     balance: result.balance,
                     active: result.active
                 }, AuctionOrBuyUtility.USER_REFRESH, {
-                    expiresIn: '1d'
+                    expiresIn: '30d'
                 });
                 res.status(200).json({
                     accessToken: token,
@@ -109,7 +109,7 @@ router.post('/login', (req, res, next) => {
         });
     }
 });
-
+// get user
 router.get('/:username', (req, res, next) => {
     const username = req.params.username;
     const token = req.headers.token;
@@ -121,7 +121,7 @@ router.get('/:username', (req, res, next) => {
                     username: username
                 }).exec().then((result => {
                     if (isNotBlank(result)) {
-                        user.password = undefined;
+                        result.password = undefined;
                         res.status(200).json(result);
                     } else {
                         res.status(404).json({
@@ -148,8 +148,8 @@ router.get('/:username', (req, res, next) => {
         });
     }
 });
-
-router.post('/:username', (req, res, next) => {
+// user change password
+router.post('/:username/change_password', (req, res, next) => {
     const username = req.params.username;
     const token = req.headers.token;
     if (isNotBlank(username) && isNotBlank(token) &&
@@ -203,8 +203,8 @@ router.post('/:username', (req, res, next) => {
         });
     }
 });
-
-router.patch('/:username', (req, res, next) => {
+// update user information
+router.post('/:username', (req, res, next) => {
     const username = req.params.username;
     const token = req.headers.token;
     if (isNotBlank(username) && isNotBlank(token) && isNotBlank(req.body.first_name) &&
@@ -217,6 +217,61 @@ router.patch('/:username', (req, res, next) => {
                         last_name: req.body.last_name,
                         phone_number: req.body.phone_number,
                         dob: req.body.dob
+                    }
+                }).exec().then(result => {
+                    if (result.ok > 0) {
+                        User.findOne({
+                            username: username
+                        }).exec().then(user => {
+                            if (isNotBlank(user)) {
+                                user.password = undefined;
+                                res.status(200).json(user);
+                            } else {
+                                res.status(404).json({
+                                    message: 'No valid entry found for user ID'
+                                });
+                            }
+                        }).catch((err) => {
+                            console.log(err);
+                            res.status(500).json({ error: err });
+                        });
+                    } else {
+                        res.status(200).json({
+                            updateTotal: result.n
+                        });
+                    }
+                }).catch(err => {
+                    res.status(500).json({
+                        error: err
+                    });
+                });
+            } else {
+                res.status(500).json({
+                    error: 'token not valid'
+                });
+            }
+        }).catch((err) => {
+            res.status(500).json({
+                error: err
+            });
+        });
+    } else {
+        res.status(400).json({
+            message: 'input missing'
+        });
+    }
+});
+// update user balance
+router.post('/:username/add_balance', (req, res, next) => {
+    const username = req.params.username;
+    const token = req.headers.token;
+    const value = req.body.value;
+    if (isNotBlank(username) && isNotBlank(token) && isNotBlank(value)) {
+        auctionOrBuyUtility.isTokenValid(token, AuctionOrBuyUtility.USER_TOKEN).then((result) => {
+            if (result == true) {
+                User.updateOne({ username: username }, {
+                    $set: {
+                        balance: value
                     }
                 }).exec().then(result => {
                     if (result.ok > 0) {
