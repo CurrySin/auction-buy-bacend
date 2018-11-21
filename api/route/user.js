@@ -142,7 +142,7 @@ router.get('/:username', (req, res, next) => {
                         res.status(200).json(result);
                     } else {
                         res.status(404).json({
-                            message: 'No valid entry found for user ID'
+                            message: 'No valid entry found for username'
                         });
                     }
                 })).catch((err) => {
@@ -225,7 +225,8 @@ router.post('/:username', (req, res, next) => {
     const username = req.params.username;
     const token = req.headers.token;
     if (isNotBlank(username) && isNotBlank(token) && isNotBlank(req.body.first_name) &&
-        isNotBlank(req.body.last_name) && isNotBlank(req.body.phone_number) && isNotBlank(req.body.dob)) {
+        isNotBlank(req.body.last_name) && isNotBlank(req.body.phone_number) && isNotBlank(req.body.dob) &&
+        isNotBlank(req.body.active)) {
         auctionOrBuyUtility.isTokenValid(token, AuctionOrBuyUtility.USER_TOKEN).then((result) => {
             if (result == true) {
                 User.updateOne({ username: username }, {
