@@ -3,20 +3,25 @@ const monogoose = require('mongoose');
 const isNotBlank = require("underscore.string/slugify");
 const jwt = require('jsonwebtoken');
 const AuctionOrBuyUtility = require('./../../utility/auctionOrBuyUtility');
+const MailService = require('../../services/mail.service');
+const MongoService = require('../../services/mongo.service');
 const router = express.Router();
 
 const User = require('./../../models/user');
 const auctionOrBuyUtility = new AuctionOrBuyUtility();
+const mailService = new MailService();
+const mongoService = new MongoService();
+
 // user sign up
 router.post('/signup', (req, res, next) => {
     if (isNotBlank(req.body.username) && isNotBlank(req.body.password) && isNotBlank(req.body.first_name) &&
-        isNotBlank(req.body.last_name) && isNotBlank(req.body.phone_number) && isNotBlank(req.body.dob)) {
-        User.findOne({
-            username: req.body.username
-        }).exec().then((result => {
+        isNotBlank(req.body.last_name) && isNotBlank(req.body.phone_number) && isNotBlank(req.body.dob) &&
+        isNotBlank(req.body.email)) {
+        const verificationCode = auctionOrBuyUtility.generateVerificationCode();
+        mongoService.query(User, { username: req.body.username }).then((result => {
             if (isNotBlank(result)) {
                 res.status(400).json({
-                    message: 'user existing'
+                    message: 'user exist'
                 });
             } else {
                 const user = new User({
@@ -26,38 +31,24 @@ router.post('/signup', (req, res, next) => {
                     first_name: req.body.first_name,
                     last_name: req.body.last_name,
                     phone_number: req.body.phone_number,
+                    email: req.body.email,
                     dob: req.body.dob,
                     balance: 0,
-                    active: true
+                    active: false,
+                    verification_code: verificationCode
                 });
                 user.save().then(result => {
-                    const token = jwt.sign({
-                        _id: result._id,
-                        username: result.username,
-                        first_name: result.first_name,
-                        last_name: result.last_name,
-                        phone_number: result.phone_number,
-                        dob: result.dob,
-                        balance: 0,
-                        active: result.active
-                    }, AuctionOrBuyUtility.USER_TOKEN, {
-                        expiresIn: '2h'
-                    });
-                    const refreshToken = jwt.sign({
-                        _id: result._id,
-                        username: result.username,
-                        first_name: result.first_name,
-                        last_name: result.last_name,
-                        phone_number: result.phone_number,
-                        dob: result.dob,
-                        balance: 0,
-                        active: result.active
-                    }, AuctionOrBuyUtility.USER_REFRESH, {
-                        expiresIn: '30d'
-                    });
-                    res.status(200).json({
-                        accessToken: token,
-                        refreshToken: refreshToken
+                    mailService.sendVerificationMail(req.body.email, verificationCode).then(result => {
+                        res.status(200).json({
+                            username: req.body.username,
+                            verifyFrom: 'email',
+                            verification_code: verificationCode
+                        });
+                    }).catch(err => {
+                        console.log(err);
+                        res.status(500).json({
+                            error: err
+                        });
                     });
                 }).catch(err => {
                     res.status(500).json({
@@ -66,7 +57,6 @@ router.post('/signup', (req, res, next) => {
                 });
             }
         })).catch((err) => {
-            console.log(err);
             res.status(500).json({ error: err });
         });
     } else {
@@ -78,43 +68,47 @@ router.post('/signup', (req, res, next) => {
 // user login
 router.post('/login', (req, res, next) => {
     if (isNotBlank(req.body.username) && isNotBlank(req.body.password)) {
-        User.findOne({
+        mongoService.query(User, {
             username: req.body.username,
             password: req.body.password
-        }).exec().then((result => {
-            if (isNotBlank(result)) {
-                const token = jwt.sign({
-                    _id: result._id,
-                    username: result.username,
-                    first_name: result.first_name,
-                    last_name: result.last_name,
-                    phone_number: result.phone_number,
-                    dob: result.dob,
-                    balance: result.balance,
-                    active: result.active
-                }, AuctionOrBuyUtility.USER_TOKEN, {
-                    expiresIn: '2h'
-                });
-                const refreshToken = jwt.sign({
-                    _id: result._id,
-                    username: result.username,
-                    first_name: result.first_name,
-                    last_name: result.last_name,
-                    phone_number: result.phone_number,
-                    dob: result.dob,
-                    balance: result.balance,
-                    active: result.active
-                }, AuctionOrBuyUtility.USER_REFRESH, {
-                    expiresIn: '30d'
-                });
-                res.status(200).json({
-                    accessToken: token,
-                    refreshToken: refreshToken
-                });
+        }).then((user => {
+            if (user.active === true) {
+                if (isNotBlank(result)) {
+                    const token = jwt.sign({
+                        _id: result._id,
+                        username: result.username,
+                        first_name: result.first_name,
+                        last_name: result.last_name,
+                        phone_number: result.phone_number,
+                        dob: result.dob,
+                        balance: result.balance,
+                        active: result.active
+                    }, AuctionOrBuyUtility.USER_TOKEN, {
+                        expiresIn: '2h'
+                    });
+                    const refreshToken = jwt.sign({
+                        _id: result._id,
+                        username: result.username,
+                        first_name: result.first_name,
+                        last_name: result.last_name,
+                        phone_number: result.phone_number,
+                        dob: result.dob,
+                        balance: result.balance,
+                        active: result.active
+                    }, AuctionOrBuyUtility.USER_REFRESH, {
+                        expiresIn: '30d'
+                    });
+                    res.status(200).json({
+                        accessToken: token,
+                        refreshToken: refreshToken
+                    });
+                } else {
+                    res.status(404).json({
+                        message: 'wrong username or password'
+                    });
+                }
             } else {
-                res.status(404).json({
-                    message: 'wrong username or password'
-                });
+                res.status(400).json({ error: 'user in inactive status' });
             }
         })).catch((err) => {
             console.log(err);
@@ -134,11 +128,10 @@ router.get('/:username', (req, res, next) => {
     if (isNotBlank(username) && isNotBlank(token)) {
         auctionOrBuyUtility.isTokenValid(token, AuctionOrBuyUtility.USER_TOKEN).then((result) => {
             if (result == true) {
-                User.findOne({
-                    username: username
-                }).exec().then((result => {
+                mongoService.query(User, { username: username }).then((result => {
                     if (isNotBlank(result)) {
                         result.password = undefined;
+                        result.verification_code = undefined;
                         res.status(200).json(result);
                     } else {
                         res.status(404).json({
@@ -165,6 +158,62 @@ router.get('/:username', (req, res, next) => {
         });
     }
 });
+// update user information
+router.post('/:username', (req, res, next) => {
+    const username = req.params.username;
+    const token = req.headers.token;
+    if (isNotBlank(username) && isNotBlank(token) && isNotBlank(req.body.first_name) &&
+        isNotBlank(req.body.last_name) && isNotBlank(req.body.phone_number) && isNotBlank(req.body.dob) &&
+        isNotBlank(req.body.active)) {
+        auctionOrBuyUtility.isTokenValid(token, AuctionOrBuyUtility.USER_TOKEN).then((result) => {
+            if (result == true) {
+                mongoService.update(User, { username: username }, {
+                    first_name: req.body.first_name,
+                    last_name: req.body.last_name,
+                    phone_number: req.body.phone_number,
+                    dob: req.body.dob
+                }).then(result => {
+                    if (result.ok > 0) {
+                        mongoService.query(User, { username: username }).then(user => {
+                            if (isNotBlank(user)) {
+                                user.password = undefined;
+                                user.verification_code = undefined;
+                                res.status(200).json(user);
+                            } else {
+                                res.status(404).json({
+                                    message: 'No valid entry found for user ID'
+                                });
+                            }
+                        }).catch((err) => {
+                            console.log(err);
+                            res.status(500).json({ error: err });
+                        });
+                    } else {
+                        res.status(200).json({
+                            updateTotal: result.n
+                        });
+                    }
+                }).catch(err => {
+                    res.status(500).json({
+                        error: err
+                    });
+                });
+            } else {
+                res.status(500).json({
+                    error: 'token not valid'
+                });
+            }
+        }).catch((err) => {
+            res.status(500).json({
+                error: err
+            });
+        });
+    } else {
+        res.status(400).json({
+            message: 'input missing'
+        });
+    }
+});
 // user change password
 router.post('/:username/change_password', (req, res, next) => {
     const username = req.params.username;
@@ -173,17 +222,12 @@ router.post('/:username/change_password', (req, res, next) => {
         isNotBlank(req.body.password) && isNotBlank(req.body.new_password)) {
         auctionOrBuyUtility.isTokenValid(token, AuctionOrBuyUtility.USER_TOKEN).then((result) => {
             if (result == true) {
-                User.updateOne({ username: username }, {
-                    $set: {
-                        password: req.body.new_password
-                    }
-                }).exec().then(result => {
+                mongoService.update(User, { username: username }, { password: req.body.new_password }).then(result => {
                     if (result.ok > 0) {
-                        User.findOne({
-                            username: username
-                        }).exec().then(user => {
+                        mongoService.query(User, { username: username }).then(user => {
                             if (isNotBlank(user)) {
                                 user.password = undefined;
+                                user.verification_code = undefined;
                                 res.status(200).json(user);
                             } else {
                                 res.status(404).json({
@@ -220,29 +264,20 @@ router.post('/:username/change_password', (req, res, next) => {
         });
     }
 });
-// update user information
-router.post('/:username', (req, res, next) => {
+// update user balance
+router.post('/:username/add_balance', (req, res, next) => {
     const username = req.params.username;
     const token = req.headers.token;
-    if (isNotBlank(username) && isNotBlank(token) && isNotBlank(req.body.first_name) &&
-        isNotBlank(req.body.last_name) && isNotBlank(req.body.phone_number) && isNotBlank(req.body.dob) &&
-        isNotBlank(req.body.active)) {
+    const value = req.body.value;
+    if (isNotBlank(username) && isNotBlank(token) && isNotBlank(value)) {
         auctionOrBuyUtility.isTokenValid(token, AuctionOrBuyUtility.USER_TOKEN).then((result) => {
             if (result == true) {
-                User.updateOne({ username: username }, {
-                    $set: {
-                        first_name: req.body.first_name,
-                        last_name: req.body.last_name,
-                        phone_number: req.body.phone_number,
-                        dob: req.body.dob
-                    }
-                }).exec().then(result => {
+                mongoService.update(User, { username: username }, { balance: value }).then(result => {
                     if (result.ok > 0) {
-                        User.findOne({
-                            username: username
-                        }).exec().then(user => {
+                        mongoService.query(User, { username: username }).then(user => {
                             if (isNotBlank(user)) {
                                 user.password = undefined;
+                                user.verification_code = undefined;
                                 res.status(200).json(user);
                             } else {
                                 res.status(404).json({
@@ -279,34 +314,92 @@ router.post('/:username', (req, res, next) => {
         });
     }
 });
-// update user balance
-router.post('/:username/add_balance', (req, res, next) => {
+// user forgot password
+router.post('/:username/forgot_password', (req, res, next) => {
+
+});
+// verify user
+router.post('/:username/verify', (req, res, next) => {
     const username = req.params.username;
-    const token = req.headers.token;
-    const value = req.body.value;
-    if (isNotBlank(username) && isNotBlank(token) && isNotBlank(value)) {
-        auctionOrBuyUtility.isTokenValid(token, AuctionOrBuyUtility.USER_TOKEN).then((result) => {
-            if (result == true) {
-                User.updateOne({ username: username }, {
-                    $set: {
-                        balance: value
-                    }
-                }).exec().then(result => {
+    const verificationCode = req.body.verification_code;
+    if (isNotBlank(username) && isNotBlank(verificationCode)) {
+        mongoService.query(User, { username: username }).then(user => {
+            if (user.active === true) {
+                res.status(400).json({
+                    message: 'user in active status'
+                });
+            } else {
+                if (user.verification_code === verificationCode) {
+                    mongoService.update(User, { username: username }, {
+                        verificationCode: '',
+                        active: true
+                    }).then(result => {
+                        if (result.ok > 0) {
+                            mongoService.query(User, { username: username }).then(user => {
+                                if (isNotBlank(user)) {
+                                    user.password = undefined;
+                                    user.verification_code = undefined;
+                                    res.status(200).json(user);
+                                } else {
+                                    res.status(404).json({
+                                        message: 'No valid entry found for user ID'
+                                    });
+                                }
+                            }).catch((err) => {
+                                console.log(err);
+                                res.status(500).json({ error: err });
+                            });
+                        } else {
+                            res.status(200).json({
+                                updateTotal: result.n
+                            });
+                        }
+                    }).catch(err => {
+                        res.status(500).json({
+                            error: err
+                        });
+                    });
+                } else {
+                    res.status(400).json({
+                        message: 'invalid verification code'
+                    });
+                }
+            }
+        }).catch(err => {
+            res.status(400).json({
+                message: err
+            });
+        })
+    } else {
+        res.status(400).json({
+            message: 'input missing'
+        });
+    }
+});
+// resend verification code
+router.post('/:username/verify/renew', (req, res, next) => {
+    const username = req.params.username;
+    const email = req.body.email;
+    if (isNotBlank(username)) {
+        mongoService.query(User, { username: username }).then(user => {
+            if (user.active === true) {
+                res.status(400).json({
+                    message: 'user in active status'
+                });
+            } else {
+                const verificationCode = auctionOrBuyUtility.generateVerificationCode(email);
+                mongoService.update(User, { username: username }, { verification_code: verificationCode }).then(result => {
                     if (result.ok > 0) {
-                        User.findOne({
-                            username: username
-                        }).exec().then(user => {
-                            if (isNotBlank(user)) {
-                                user.password = undefined;
-                                res.status(200).json(user);
-                            } else {
-                                res.status(404).json({
-                                    message: 'No valid entry found for user ID'
-                                });
-                            }
-                        }).catch((err) => {
-                            console.log(err);
-                            res.status(500).json({ error: err });
+                        mailService.sendVerificationMail(email, verificationCode).then(result => {
+                            res.status(200).json({
+                                username: req.body.username,
+                                verifyFrom: 'email',
+                                verification_code: verificationCode
+                            });
+                        }).catch(err => {
+                            res.status(500).json({
+                                error: err
+                            });
                         });
                     } else {
                         res.status(200).json({
@@ -314,20 +407,16 @@ router.post('/:username/add_balance', (req, res, next) => {
                         });
                     }
                 }).catch(err => {
-                    res.status(500).json({
-                        error: err
+                    res.status(400).json({
+                        message: err
                     });
                 });
-            } else {
-                res.status(500).json({
-                    error: 'token not valid'
-                });
             }
-        }).catch((err) => {
-            res.status(500).json({
-                error: err
+        }).catch(err => {
+            res.status(400).json({
+                message: err
             });
-        });
+        })
     } else {
         res.status(400).json({
             message: 'input missing'

@@ -17,6 +17,9 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 app.use((req, res, next) => {
+    console.log(`#########################################################`);
+    console.log(`#  Request Time ${new Date().toString()} #`);
+    console.log(`#########################################################`);
     res.header('Access-Control-Allow-Orgin', '*');
     res.header('Access-Control-Allow-Headers', 'Orgin, X-Request-With, Content-Type, Accept, Authorization');
     if (req.method === 'OPTIONS') {
