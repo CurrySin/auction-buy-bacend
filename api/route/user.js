@@ -355,6 +355,47 @@ router.post('/:username/forgot_password', (req, res, next) => {
         });
     }
 });
+// user renew password
+router.post('/:username/forgot_password/renew', (req, res, next) => {
+    const username = req.params.username;
+    if (isNotBlank(username)) {
+        mongoService.query(User, { username: username }).then(user => {
+            const email = user.email;
+            const verificationCode = auctionOrBuyUtility.generateVerificationCode();
+            mongoService.update(User, { username: username }, { active: false, verification_code: verificationCode }).then(result => {
+                if (result.ok > 0) {
+                    mailService.sendVerificationMail(email, verificationCode).then(result => {
+                        res.status(200).json({
+                            username: req.body.username,
+                            verifyFrom: 'email',
+                            verification_code: verificationCode
+                        });
+                    }).catch(err => {
+                        res.status(500).json({
+                            error: err
+                        });
+                    });
+                } else {
+                    res.status(200).json({
+                        updateTotal: result.n
+                    });
+                }
+            }).catch(err => {
+                res.status(500).json({
+                    message: err
+                });
+            });
+        }).catch(err => {
+            res.status(400).json({
+                message: err
+            });
+        });
+    } else {
+        res.status(400).json({
+            message: 'input missing'
+        });
+    }
+});
 // verify user
 router.post('/:username/verify', (req, res, next) => {
     const username = req.params.username;
