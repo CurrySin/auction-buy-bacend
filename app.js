@@ -20,6 +20,16 @@ app.use((req, res, next) => {
     console.log(`#########################################################`);
     console.log(`#  Request Time ${new Date().toString()} #`);
     console.log(`#########################################################`);
+    console.log(`req.baseUrl: ${JSON.stringify(req.baseUrl)}`);
+    console.log(`req.body: ${JSON.stringify(req.body)}`);
+    console.log(`req.hostname: ${JSON.stringify(req.hostname)}`);
+    console.log(`req.ip: ${JSON.stringify(req.ip)}`);
+    console.log(`req.ips: ${JSON.stringify(req.ips)}`);
+    console.log(`req.originalUrl: ${JSON.stringify(req.originalUrl)}`);
+    console.log(`req.path: ${JSON.stringify(req.path)}`);
+    console.log(`req.protocol: ${JSON.stringify(req.protocol)}`);
+    console.log(`req.query: ${JSON.stringify(req.query)}`);
+    console.log(`#########################################################`);
     res.header('Access-Control-Allow-Orgin', '*');
     res.header('Access-Control-Allow-Headers', 'Orgin, X-Request-With, Content-Type, Accept, Authorization');
     if (req.method === 'OPTIONS') {
