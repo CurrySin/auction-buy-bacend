@@ -72,43 +72,49 @@ router.post('/login', (req, res, next) => {
             username: req.body.username,
             password: req.body.password
         }).then((result => {
-            if (result.active === true) {
-                if (isNotBlank(result)) {
-                    const token = jwt.sign({
-                        _id: result._id,
-                        username: result.username,
-                        first_name: result.first_name,
-                        last_name: result.last_name,
-                        phone_number: result.phone_number,
-                        dob: result.dob,
-                        balance: result.balance,
-                        active: result.active
-                    }, AuctionOrBuyUtility.USER_TOKEN, {
-                        expiresIn: '2h'
-                    });
-                    const refreshToken = jwt.sign({
-                        _id: result._id,
-                        username: result.username,
-                        first_name: result.first_name,
-                        last_name: result.last_name,
-                        phone_number: result.phone_number,
-                        dob: result.dob,
-                        balance: result.balance,
-                        active: result.active
-                    }, AuctionOrBuyUtility.USER_REFRESH, {
-                        expiresIn: '30d'
-                    });
-                    res.status(200).json({
-                        accessToken: token,
-                        refreshToken: refreshToken
-                    });
+            if (isNotBlank(result)) {
+                if (result.active === true) {
+                    if (isNotBlank(result)) {
+                        const token = jwt.sign({
+                            _id: result._id,
+                            username: result.username,
+                            first_name: result.first_name,
+                            last_name: result.last_name,
+                            phone_number: result.phone_number,
+                            dob: result.dob,
+                            balance: result.balance,
+                            active: result.active
+                        }, AuctionOrBuyUtility.USER_TOKEN, {
+                            expiresIn: '2h'
+                        });
+                        const refreshToken = jwt.sign({
+                            _id: result._id,
+                            username: result.username,
+                            first_name: result.first_name,
+                            last_name: result.last_name,
+                            phone_number: result.phone_number,
+                            dob: result.dob,
+                            balance: result.balance,
+                            active: result.active
+                        }, AuctionOrBuyUtility.USER_REFRESH, {
+                            expiresIn: '30d'
+                        });
+                        res.status(200).json({
+                            accessToken: token,
+                            refreshToken: refreshToken
+                        });
+                    } else {
+                        res.status(404).json({
+                            message: 'wrong username or password'
+                        });
+                    }
                 } else {
-                    res.status(404).json({
-                        message: 'wrong username or password'
-                    });
+                    res.status(400).json({ error: 'user in inactive status' });
                 }
             } else {
-                res.status(400).json({ error: 'user in inactive status' });
+                res.status(400).json({
+                    message: 'user not found'
+                });
             }
         })).catch((err) => {
             console.log(err);
