@@ -71,8 +71,8 @@ router.post('/login', (req, res, next) => {
         mongoService.query(User, {
             username: req.body.username,
             password: req.body.password
-        }).then((user => {
-            if (user.active === true) {
+        }).then((result => {
+            if (result.active === true) {
                 if (isNotBlank(result)) {
                     const token = jwt.sign({
                         _id: result._id,
