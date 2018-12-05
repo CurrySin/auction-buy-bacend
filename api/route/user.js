@@ -14,6 +14,7 @@ const mongoService = new MongoService();
 
 // user sign up
 router.post('/signup', (req, res, next) => {
+    console.log('[DEBUG] user signup');
     if (isNotBlank(req.body.username) && isNotBlank(req.body.password) && isNotBlank(req.body.first_name) &&
         isNotBlank(req.body.last_name) && isNotBlank(req.body.phone_number) && isNotBlank(req.body.dob) &&
         isNotBlank(req.body.email)) {
@@ -67,6 +68,7 @@ router.post('/signup', (req, res, next) => {
 });
 // user login
 router.post('/login', (req, res, next) => {
+    console.log('[DEBUG] user login');
     if (isNotBlank(req.body.username) && isNotBlank(req.body.password)) {
         mongoService.query(User, {
             username: req.body.username,
@@ -128,6 +130,7 @@ router.post('/login', (req, res, next) => {
 });
 // get user
 router.get('/:username', (req, res, next) => {
+    console.log('[DEBUG] get user balance');
     const username = req.params.username;
     const token = req.headers.token;
     // console.log(`[DEBUG] username: ${username} token: ${token}`);
@@ -149,8 +152,8 @@ router.get('/:username', (req, res, next) => {
                     res.status(500).json({ error: err });
                 });
             } else {
-                res.status(500).json({
-                    error: 'token not valid'
+                res.status(400).json({
+                    message: 'token not valid'
                 });
             }
         }).catch((err) => {
@@ -166,6 +169,7 @@ router.get('/:username', (req, res, next) => {
 });
 // update user information
 router.post('/:username', (req, res, next) => {
+    console.log('[DEBUG] update user information');
     const username = req.params.username;
     const token = req.headers.token;
     if (isNotBlank(username) && isNotBlank(token) && isNotBlank(req.body.first_name) &&
@@ -205,8 +209,8 @@ router.post('/:username', (req, res, next) => {
                     });
                 });
             } else {
-                res.status(500).json({
-                    error: 'token not valid'
+                res.status(400).json({
+                    message: 'token not valid'
                 });
             }
         }).catch((err) => {
@@ -222,6 +226,7 @@ router.post('/:username', (req, res, next) => {
 });
 // user change password
 router.post('/:username/change_password', (req, res, next) => {
+    console.log('[DEBUG] user change password');
     const username = req.params.username;
     const token = req.headers.token;
     if (isNotBlank(username) && isNotBlank(token) &&
@@ -255,8 +260,8 @@ router.post('/:username/change_password', (req, res, next) => {
                     });
                 })
             } else {
-                res.status(500).json({
-                    error: 'token not valid'
+                res.status(400).json({
+                    message: 'token not valid'
                 });
             }
         }).catch(err => {
@@ -272,13 +277,14 @@ router.post('/:username/change_password', (req, res, next) => {
 });
 // update user balance
 router.post('/:username/add_balance', (req, res, next) => {
+    console.log('[DEBUG] add user balance');
     const username = req.params.username;
     const token = req.headers.token;
     const value = req.body.value;
     if (isNotBlank(username) && isNotBlank(token) && isNotBlank(value)) {
         auctionOrBuyUtility.isTokenValid(token, AuctionOrBuyUtility.USER_TOKEN).then((result) => {
             if (result == true) {
-                mongoService.update(User, { username: username }, { balance: value }).then(result => {
+                mongoService.queryAll(User, { username: username }, { balance: value }).then(result => {
                     if (result.ok > 0) {
                         mongoService.query(User, { username: username }).then(user => {
                             if (isNotBlank(user)) {
@@ -305,8 +311,8 @@ router.post('/:username/add_balance', (req, res, next) => {
                     });
                 });
             } else {
-                res.status(500).json({
-                    error: 'token not valid'
+                res.status(400).json({
+                    message: 'token not valid'
                 });
             }
         }).catch((err) => {
@@ -322,6 +328,7 @@ router.post('/:username/add_balance', (req, res, next) => {
 });
 // user forgot password
 router.post('/:username/forgot_password', (req, res, next) => {
+    console.log('[DEBUG] user forgot password');
     const username = req.params.username;
     if (isNotBlank(username)) {
         mongoService.query(User, { username: username }).then(user => {
@@ -363,6 +370,7 @@ router.post('/:username/forgot_password', (req, res, next) => {
 });
 // user renew password
 router.post('/:username/forgot_password/renew', (req, res, next) => {
+    console.log('[DEBUG] reset user passsword');
     const username = req.params.username;
     if (isNotBlank(username)) {
         mongoService.query(User, { username: username }).then(user => {
@@ -404,6 +412,7 @@ router.post('/:username/forgot_password/renew', (req, res, next) => {
 });
 // verify user
 router.post('/:username/verify', (req, res, next) => {
+    console.log('[DEBUG] verify user');
     const username = req.params.username;
     const verificationCode = req.body.verification_code;
     if (isNotBlank(username) && isNotBlank(verificationCode)) {
@@ -415,7 +424,7 @@ router.post('/:username/verify', (req, res, next) => {
             } else {
                 if (user.verification_code === verificationCode) {
                     mongoService.update(User, { username: username }, {
-                        verificationCode: '',
+                        verification_code: '',
                         active: true
                     }).then(result => {
                         if (result.ok > 0) {
@@ -462,6 +471,7 @@ router.post('/:username/verify', (req, res, next) => {
 });
 // resend verification code
 router.post('/:username/verify/renew', (req, res, next) => {
+    console.log('[DEBUG] resend verification code');
     const username = req.params.username;
     const email = req.body.email;
     if (isNotBlank(username)) {
@@ -478,7 +488,7 @@ router.post('/:username/verify/renew', (req, res, next) => {
                             res.status(200).json({
                                 username: req.body.username,
                                 verifyFrom: 'email',
-                                verification_code: verificationCode
+                                verification_code: verificationCode.toString()
                             });
                         }).catch(err => {
                             res.status(500).json({

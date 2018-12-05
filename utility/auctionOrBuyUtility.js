@@ -5,6 +5,13 @@ function AuctionOrBuyUtility() {}
 
 AuctionOrBuyUtility.USER_TOKEN = 'user-token';
 AuctionOrBuyUtility.USER_REFRESH = 'user-refresh';
+AuctionOrBuyUtility.DNS = 'http://currysin-server.ddns.net:8888/';
+AuctionOrBuyUtility.PRODUCT_AUCTION = 'auction';
+AuctionOrBuyUtility.PRODUCT_BUY = 'buy';
+AuctionOrBuyUtility.PRODUCT_STATUS_ON_SELL = 'on_sell';
+AuctionOrBuyUtility.PRODUCT_STATUS_SOLD = 'sold';
+AuctionOrBuyUtility.PRODUCT_STATUS_SHIPPING = 'shipping';
+AuctionOrBuyUtility.PRODUCT_STATUS_POD = 'pod';
 
 AuctionOrBuyUtility.prototype.isTokenValid = function(jwtToken, secretType) {
     var secretKey = "";
@@ -14,18 +21,20 @@ AuctionOrBuyUtility.prototype.isTokenValid = function(jwtToken, secretType) {
         secretKey = AuctionOrBuyUtility.USER_REFRESH;
     }
     console.log(`[DEBUG] ${AuctionOrBuyUtility.USER_TOKEN}, ${this.USER_TOKEN}`);
-    return new Promise((resolve, reject) => {
+    return new Promise((res, rej) => {
         jwt.verify(jwtToken, secretKey, function(err, decoded) {
-            const now = new Date().getTime();
+            console.log(`[DEBUG] err: ${JSON.stringify(err)} decoded: ${JSON.stringify(decoded)} ${!decoded}`);
             if (err || !decoded) {
-                reject(err);
+                console.log('error');
+                rej(err);
             } else {
-                console.log(`[DEBUG] now: ${now} exp: ${decoded.exp}`);
+                const now = new Date().getTime();
                 const exp = decoded.exp * 1000;
+                console.log(`[DEBUG] now: ${now} exp: ${decoded.exp * 1000}`);
                 if (exp > now) {
-                    resolve(true);
+                    res(true);
                 } else {
-                    reject(false);
+                    res(false);
                 }
             }
         });
