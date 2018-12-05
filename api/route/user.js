@@ -380,7 +380,7 @@ router.post('/:username/forgot_password/renew', (req, res, next) => {
                 if (result.ok > 0) {
                     mailService.sendVerificationMail(email, verificationCode).then(result => {
                         res.status(200).json({
-                            username: req.body.username,
+                            username: username,
                             verifyFrom: 'email',
                             verification_code: verificationCode
                         });
