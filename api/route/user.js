@@ -284,7 +284,7 @@ router.post('/:username/add_balance', (req, res, next) => {
     if (isNotBlank(username) && isNotBlank(token) && isNotBlank(value)) {
         auctionOrBuyUtility.isTokenValid(token, AuctionOrBuyUtility.USER_TOKEN).then((result) => {
             if (result == true) {
-                mongoService.queryAll(User, { username: username }, { balance: value }).then(result => {
+                mongoService.update(User, { username: username }, { balance: value }).then(result => {
                     if (result.ok > 0) {
                         mongoService.query(User, { username: username }).then(user => {
                             if (isNotBlank(user)) {
@@ -316,6 +316,7 @@ router.post('/:username/add_balance', (req, res, next) => {
                 });
             }
         }).catch((err) => {
+            console.log('/////')
             res.status(500).json({
                 error: err
             });
