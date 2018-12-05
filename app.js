@@ -22,6 +22,7 @@ app.use((req, res, next) => {
     console.log(`#  Request Time ${new Date().toString()} #`);
     console.log(`#########################################################`);
     console.log(`req.baseUrl: ${JSON.stringify(req.baseUrl)}`);
+    console.log(`req.headers: ${JSON.stringify(req.headers)}`);
     console.log(`req.body: ${JSON.stringify(req.body)}`);
     console.log(`req.hostname: ${JSON.stringify(req.hostname)}`);
     console.log(`req.ip: ${JSON.stringify(req.ip)}`);
