@@ -372,11 +372,13 @@ router.post('/:username/forgot_password', (req, res, next) => {
 router.post('/:username/forgot_password/renew', (req, res, next) => {
     console.log('[DEBUG] reset user passsword');
     const username = req.params.username;
-    const verificationCode = req.body.verification_code;
+    const verificationCode = req.body.verificationCode;
     if (isNotBlank(username) && isNotBlank(verificationCode) && isNotBlank(req.body.newPassword)) {
         mongoService.query(User, { username: username }).then(user => {
+            console.log('[DEBUG] user verification code: ' + user.verification_code);
             if (user.verification_code === verificationCode) {
-                mongoService.update(User, { username: username }, { active: false, verification_code: '', password: newPassword }).then(result => {
+                mongoService.update(User, { username: username }, { active: true, verificationCode: '', password: req.body.newPassword }).then(result => {
+                    console.log(result);
                     res.status(200).json({
                         updateTotal: result.n
                     });
@@ -387,7 +389,7 @@ router.post('/:username/forgot_password/renew', (req, res, next) => {
                 });
             } else {
                 res.status(400).json({
-                    message: 'verification code missing'
+                    message: 'verification code was wrong'
                 });
             }
         }).catch(err => {
