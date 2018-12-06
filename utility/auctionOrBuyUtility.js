@@ -15,14 +15,14 @@ AuctionOrBuyUtility.PRODUCT_STATUS_POD = 'pod';
 
 AuctionOrBuyUtility.prototype.isTokenValid = function(jwtToken, secretType) {
     var secretKey = "";
-    if (secretType === AuctionOrBuyUtility.USER_TOKEN) {
-        secretKey = AuctionOrBuyUtility.USER_TOKEN;
-    } else if (secretKey == AuctionOrBuyUtility.USER_REFRESH) {
-        secretKey = AuctionOrBuyUtility.USER_REFRESH;
-    }
-    console.log(`[DEBUG] ${AuctionOrBuyUtility.USER_TOKEN}, ${this.USER_TOKEN}`);
+    // if (secretType === AuctionOrBuyUtility.USER_TOKEN) {
+    //     secretKey = AuctionOrBuyUtility.USER_TOKEN;
+    // } else if (secretKey === AuctionOrBuyUtility.USER_REFRESH) {
+    //     secretKey = AuctionOrBuyUtility.USER_REFRESH;
+    // }
+    console.log(`[DEBUG] ${secretType}, ${jwtToken}`);
     return new Promise((res, rej) => {
-        jwt.verify(jwtToken, secretKey, function(err, decoded) {
+        jwt.verify(jwtToken, secretType, function(err, decoded) {
             console.log(`[DEBUG] err: ${JSON.stringify(err)} decoded: ${JSON.stringify(decoded)} ${!decoded}`);
             if (err || !decoded) {
                 console.log('error');

@@ -39,7 +39,7 @@ router.post('/receive/:username', (req, res, next) => {
         });
     } else {
         res.status(400).json({
-            message: 'token messing'
+            message: 'token missing'
         });
     }
 });
@@ -75,7 +75,7 @@ router.post('/send/:username', (req, res, next) => {
                     });
                 } else {
                     res.status(400).json({
-                        message: 'input messing'
+                        message: 'input missing'
                     });
                 }
             } else {
@@ -90,7 +90,7 @@ router.post('/send/:username', (req, res, next) => {
         });
     } else {
         res.status(400).json({
-            message: 'token messing'
+            message: 'token missing'
         });
     }
 });
@@ -126,7 +126,7 @@ router.post('/reply/:username', (req, res, next) => {
                     });
                 } else {
                     res.status(400).json({
-                        message: 'input messing'
+                        message: 'input missing'
                     });
                 }
             } else {
@@ -141,7 +141,7 @@ router.post('/reply/:username', (req, res, next) => {
         });
     } else {
         res.status(400).json({
-            message: 'token messing'
+            message: 'token missing'
         });
     }
 });
@@ -164,7 +164,7 @@ router.post('/:mailId', (req, res, next) => {
                     });
                 } else {
                     res.status(400).json({
-                        message: 'input messing'
+                        message: 'input missing'
                     });
                 }
             } else {
@@ -179,7 +179,7 @@ router.post('/:mailId', (req, res, next) => {
         });
     } else {
         res.status(400).json({
-            message: 'token messing'
+            message: 'token missing'
         });
     }
 });

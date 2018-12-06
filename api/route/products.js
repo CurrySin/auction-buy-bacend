@@ -80,7 +80,7 @@ router.post('/create', (req, res, next) => {
                             });
                         } else {
                             res.status(400).json({
-                                message: 'input messing'
+                                message: 'input missing'
                             });
                         }
                     } else if (req.body.type === AuctionOrBuyUtility.PRODUCT_BUY) {
@@ -122,7 +122,7 @@ router.post('/create', (req, res, next) => {
                             });
                         } else {
                             res.status(400).json({
-                                message: 'input messing'
+                                message: 'input missing'
                             });
                         }
                     }
@@ -139,7 +139,7 @@ router.post('/create', (req, res, next) => {
             });
     } else {
         res.status(400).json({
-            message: 'token messing'
+            message: 'token missing'
         });
     }
 });
@@ -235,7 +235,7 @@ router.post('/:productId', (req, res, next) => {
                                 });
                             } else {
                                 res.status(400).json({
-                                    message: 'input messing'
+                                    message: 'input missing'
                                 });
                             }
                         }
@@ -257,7 +257,7 @@ router.post('/:productId', (req, res, next) => {
             });
     } else {
         res.status(400).json({
-            message: 'token messing'
+            message: 'token missing'
         });
     }
 });
@@ -314,7 +314,7 @@ router.post('/:productId/upload_image', upload.single('productImage'), (req, res
             });
     } else {
         res.status(400).json({
-            message: 'token messing'
+            message: 'token missing'
         });
     }
 });
@@ -332,7 +332,7 @@ router.get('/search/title/:productTitle', (req, res, next) => {
         });
     } else {
         res.status(400).json({
-            message: 'product title messing'
+            message: 'product title missing'
         });
     }
 });
@@ -350,7 +350,7 @@ router.get('/search/category/:categoryName', (req, res, next) => {
         });
     } else {
         res.status(400).json({
-            message: 'product category messing'
+            message: 'product category missing'
         });
     }
 });
@@ -368,7 +368,7 @@ router.get('/search/sub_category/:subCategoryName', (req, res, next) => {
         });
     } else {
         res.status(400).json({
-            message: 'product sub category messing'
+            message: 'product sub category missing'
         });
     }
 });
@@ -411,7 +411,7 @@ router.post('/shipping/:productId', (req, res, next) => {
                     });
                 } else {
                     res.status(400).json({
-                        message: 'input messing'
+                        message: 'input missing'
                     });
                 }
             } else {
@@ -426,7 +426,7 @@ router.post('/shipping/:productId', (req, res, next) => {
         });
     } else {
         res.status(400).json({
-            message: 'token messing'
+            message: 'token missing'
         });
     }
 });
@@ -470,7 +470,7 @@ router.post('/shipping/update/:shippingId/:shippingStatus', (req, res, next) => 
         });
     } else {
         res.status(400).json({
-            message: 'token messing'
+            message: 'token missing'
         });
     }
 });
@@ -506,7 +506,7 @@ router.post('/shipping/search_by_id/b_s/:productId/:buyer/:seller', (req, res, n
         });
     } else {
         res.status(400).json({
-            message: 'token messing'
+            message: 'token missing'
         });
     }
 });

@@ -34,7 +34,7 @@ app.use((req, res, next) => {
     console.log(`req.query: ${JSON.stringify(req.query)}`);
     console.log(`#########################################################`);
     res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Headers', 'Orgin, X-Request-With, Content-Type, Accept, Authorization, token');
+    res.header('Access-Control-Allow-Headers', 'Orgin, X-Request-With, Content-Type, Accept, Authorization, token, refreshToken');
     if (req.method === 'OPTIONS') {
         res.header('Access-Control-Allow-Method', 'PUT, POST, PATCH, DELETE, GET');
         return res.status(200).json({});

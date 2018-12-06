@@ -510,5 +510,80 @@ router.post('/:username/verify/renew', (req, res, next) => {
         });
     }
 });
-
+// refresh token
+router.post('/refresh/:username', (req, res, next) => {
+    console.log('[DEBUG] refresh token');
+    const username = req.params.username;
+    const refreshToken = req.headers.token;
+    console.log(`[DEUBG] ${username} ${refreshToken}`);
+    if (isNotBlank(refreshToken) && isNotBlank(username)) {
+        auctionOrBuyUtility.isTokenValid(refreshToken, AuctionOrBuyUtility.USER_REFRESH).then((tokenResult) => {
+            if (tokenResult) {
+                mongoService.query(User, {
+                    username: username
+                }).then((result => {
+                    if (isNotBlank(result)) {
+                        if (result.active === true) {
+                            if (isNotBlank(result)) {
+                                const token = jwt.sign({
+                                    _id: result._id,
+                                    username: result.username,
+                                    first_name: result.first_name,
+                                    last_name: result.last_name,
+                                    phone_number: result.phone_number,
+                                    dob: result.dob,
+                                    balance: result.balance,
+                                    active: result.active
+                                }, AuctionOrBuyUtility.USER_TOKEN, {
+                                    expiresIn: '2h'
+                                });
+                                const newRefreshToken = jwt.sign({
+                                    _id: result._id,
+                                    username: result.username,
+                                    first_name: result.first_name,
+                                    last_name: result.last_name,
+                                    phone_number: result.phone_number,
+                                    dob: result.dob,
+                                    balance: result.balance,
+                                    active: result.active
+                                }, AuctionOrBuyUtility.USER_REFRESH, {
+                                    expiresIn: '30d'
+                                });
+                                res.status(200).json({
+                                    accessToken: token,
+                                    refreshToken: newRefreshToken
+                                });
+                            } else {
+                                res.status(404).json({
+                                    message: 'wrong username or password'
+                                });
+                            }
+                        } else {
+                            res.status(400).json({ error: 'user in inactive status' });
+                        }
+                    } else {
+                        res.status(400).json({
+                            message: 'user not found'
+                        });
+                    }
+                })).catch((err) => {
+                    console.log(err);
+                    res.status(500).json({ error: err });
+                });
+            } else {
+                res.status(400).json({
+                    message: 'refresh token not valid'
+                });
+            }
+        }).catch(err => {
+            res.status(500).json({
+                error: err
+            });
+        })
+    } else {
+        res.status(400).json({
+            message: 'refresh token missing'
+        });
+    }
+});
 module.exports = router;
