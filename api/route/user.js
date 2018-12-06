@@ -373,7 +373,7 @@ router.post('/:username/forgot_password/renew', (req, res, next) => {
     console.log('[DEBUG] reset user passsword');
     const username = req.params.username;
     const verificationCode = req.body.verification_code;
-    if (isNotBlank(username) && isNotBlank(verification_code) && isNotBlank(req.body.newPassword)) {
+    if (isNotBlank(username) && isNotBlank(verificationCode) && isNotBlank(req.body.newPassword)) {
         mongoService.query(User, { username: username }).then(user => {
             if (user.verification_code === verificationCode) {
                 mongoService.update(User, { username: username }, { active: false, verification_code: '', password: newPassword }).then(result => {
