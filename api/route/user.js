@@ -316,7 +316,6 @@ router.post('/:username/add_balance', (req, res, next) => {
                 });
             }
         }).catch((err) => {
-            console.log('/////')
             res.status(500).json({
                 error: err
             });

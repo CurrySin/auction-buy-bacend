@@ -12,6 +12,16 @@ MongoService.prototype.query = function(schema, param) {
     });
 };
 
+MongoService.prototype.queryAll = function(schema, param) {
+    return new Promise((res, rej) => {
+        schema.find(param).exec().then(result => {
+            res(result);
+        }).catch(err => {
+            rej(err)
+        })
+    });
+};
+
 MongoService.prototype.where = function(schema, key, value) {
     return new Promise((res, rej) => {
         schema.where(key, value).exec().then(result => {
