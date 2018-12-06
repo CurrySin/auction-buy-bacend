@@ -6,6 +6,7 @@ const mongoose = require('mongoose');
 
 const productRoutes = require('./api/route/products');
 const userRoutes = require('./api/route/user');
+const mailRoutes = require('./api/route/mail');
 
 mongoose.connect('mongodb://currysin:' + process.env.MONGO_ATLAS_PW + '@acutionorbuydb-shard-00-00-vvdn3.mongodb.net:27017,acutionorbuydb-shard-00-01-vvdn3.mongodb.net:27017,acutionorbuydb-shard-00-02-vvdn3.mongodb.net:27017/test?ssl=true&replicaSet=AcutionOrBuyDB-shard-0&authSource=admin&retryWrites=true', {
     // useMongoClient: true
@@ -43,6 +44,7 @@ app.use((req, res, next) => {
 
 app.use('/products', productRoutes);
 app.use('/user', userRoutes);
+app.use('/mail', mailRoutes);
 
 app.use((req, res, next) => {
     const error = new Error('Not found');
