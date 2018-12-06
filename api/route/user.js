@@ -372,33 +372,24 @@ router.post('/:username/forgot_password', (req, res, next) => {
 router.post('/:username/forgot_password/renew', (req, res, next) => {
     console.log('[DEBUG] reset user passsword');
     const username = req.params.username;
-    if (isNotBlank(username)) {
+    const verificationCode = req.body.verification_code;
+    if (isNotBlank(username) && isNotBlank(verification_code) && isNotBlank(req.body.newPassword)) {
         mongoService.query(User, { username: username }).then(user => {
-            const email = user.email;
-            const verificationCode = auctionOrBuyUtility.generateVerificationCode();
-            mongoService.update(User, { username: username }, { active: false, verification_code: verificationCode }).then(result => {
-                if (result.ok > 0) {
-                    mailService.sendVerificationMail(email, verificationCode).then(result => {
-                        res.status(200).json({
-                            username: username,
-                            verifyFrom: 'email',
-                            verification_code: verificationCode
-                        });
-                    }).catch(err => {
-                        res.status(500).json({
-                            error: err
-                        });
-                    });
-                } else {
+            if (user.verification_code === verificationCode) {
+                mongoService.update(User, { username: username }, { active: false, verification_code: '', password: newPassword }).then(result => {
                     res.status(200).json({
                         updateTotal: result.n
                     });
-                }
-            }).catch(err => {
-                res.status(500).json({
-                    message: err
+                }).catch(err => {
+                    res.status(500).json({
+                        message: err
+                    });
                 });
-            });
+            } else {
+                res.status(400).json({
+                    message: 'verification code missing'
+                });
+            }
         }).catch(err => {
             res.status(400).json({
                 message: err
