@@ -155,7 +155,7 @@ router.post('/:mailId', (req, res, next) => {
         auctionOrBuyUtility.isTokenValid(token, AuctionOrBuyUtility.USER_TOKEN).then(result => {
             if (result) {
                 if (isNotBlank(mailId)) {
-                    mongoService.queryAll(Mail, { _id: mailId }).then(result => {
+                    mongoService.query(Mail, { _id: mailId }).then(result => {
                         res.status(200).json(result);
                     }).catch(err => {
                         res.status(500).json({
