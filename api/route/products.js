@@ -30,6 +30,7 @@ const upload = multer({
 });
 
 const Product = require('./../../models/product');
+const User = require('./../../models/user');
 const Product_Shipping = require('./../../models/product_shipping');
 const auctionOrBuyUtility = new AuctionOrBuyUtility();
 const mongoService = new MongoService();
@@ -477,7 +478,7 @@ router.post('/shipping/update/:shippingId/:shippingStatus', (req, res, next) => 
 // get product shipping by product id and buyer or seller
 router.post('/shipping/search_by_id/b_s/:productId/:buyer/:seller', (req, res, next) => {
     console.log('[DEBUG] get product shipping by product id and buyer or seller');
-    const proudctId = req.params.productId;
+    const productId = req.params.productId;
     const buyer = req.params.buyer;
     const seller = req.params.seller;
     const token = req.headers.token;
@@ -485,7 +486,7 @@ router.post('/shipping/search_by_id/b_s/:productId/:buyer/:seller', (req, res, n
         auctionOrBuyUtility.isTokenValid(token, AuctionOrBuyUtility.USER_TOKEN).then(result => {
             if (result) {
                 Product_Shipping
-                    .where('product_id', new RegExp(proudctId))
+                    .where('product_id', new RegExp(productId))
                     .where('buyer', new RegExp(buyer))
                     .where('seller', new RegExp(seller)).exec().then(result => {
                         res.status(200).json(result);
@@ -494,6 +495,80 @@ router.post('/shipping/search_by_id/b_s/:productId/:buyer/:seller', (req, res, n
                             error: err
                         });
                     })
+            } else {
+                res.status(400).json({
+                    message: 'token not valid'
+                });
+            }
+        }).catch(err => {
+            res.status(500).json({
+                error: err
+            });
+        });
+    } else {
+        res.status(400).json({
+            message: 'token missing'
+        });
+    }
+});
+// buy a product
+router.post('/buy/:username/:productId', (req, res, next) => {
+    console.log('[DEBUG] get product shipping by product id and buyer or seller');
+    const productId = req.params.productId;
+    const username = req.params.username;
+    const token = req.headers.token;
+    if (isNotBlank(token) && isNotBlank(username) && isNotBlank(productId)) {
+        auctionOrBuyUtility.isTokenValid(token, AuctionOrBuyUtility.USER_TOKEN).then(result => {
+            if (result) {
+                console.log('[DEBUG] query proudct');
+                mongoService.query(Product, { _id: productId }).then(product => {
+                    const price = product.price;
+                    const quantity = Number.parseInt(product.quantity);
+                    console.log('[DEBUG] query user');
+                    mongoService.query(User, { username: username }).then(user => {
+                        const balance = user.balance;
+                        const new_balance = balance - price;
+                        console.log('[DEBUG] update user');
+                        mongoService.update(User, { username: username }, { balance: new_balance }).then(update_user_result => {
+                            if (update_user_result.ok > 0) {
+                                const new_quantity = quantity - 1;
+                                console.log('[DEBUG] update product');
+                                mongoService.update(Product, { _id: productId }, { quantity: new_quantity }).then(update_prouduct_result => {
+                                    console.log('[DEBUG] update_prouduct_result: ' + update_prouduct_result.ok);
+                                    if (update_prouduct_result.ok > 0) {
+                                        res.status(200).json({
+                                            okTotal: update_prouduct_result.ok
+                                        });
+                                    } else {
+                                        res.status(500).json({
+                                            message: 'Faild to update product'
+                                        });
+                                    }
+                                }).catch(err => {
+                                    res.status(500).json({
+                                        error: err
+                                    });
+                                });
+                            } else {
+                                res.status(500).json({
+                                    message: 'Faild to update user'
+                                });
+                            }
+                        }).catch(err => {
+                            res.status(500).json({
+                                error: err
+                            });
+                        });
+                    }).catch(err => {
+                        res.status(500).json({
+                            error: err
+                        });
+                    });
+                }).catch(err => {
+                    res.status(500).json({
+                        error: err
+                    });
+                });
             } else {
                 res.status(400).json({
                     message: 'token not valid'
